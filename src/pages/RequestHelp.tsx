@@ -5,6 +5,8 @@ import EmergencyHelpCard from "@/components/help/EmergencyHelpCard";
 import MedicalHelpCard from "@/components/help/MedicalHelpCard";
 import CommunityHelpCard from "@/components/help/CommunityHelpCard";
 import LocationShareCard from "@/components/help/LocationShareCard";
+import DisabilityAIAssistant from "@/components/help/DisabilityAIAssistant";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const RequestHelp = () => {
   return (
@@ -16,15 +18,28 @@ const RequestHelp = () => {
             Select the type of help you need. We'll connect you with nearby assistance.
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <EmergencyHelpCard />
-            <LocationShareCard />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <MedicalHelpCard />
-            <CommunityHelpCard />
-          </div>
+          <Tabs defaultValue="services" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="services">Support Services</TabsTrigger>
+              <TabsTrigger value="ai-assistant">AI Assistant</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="services" className="mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <EmergencyHelpCard />
+                <LocationShareCard />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <MedicalHelpCard />
+                <CommunityHelpCard />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="ai-assistant" className="mt-4">
+              <DisabilityAIAssistant />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </MainLayout>
