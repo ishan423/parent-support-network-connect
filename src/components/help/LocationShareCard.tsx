@@ -1,15 +1,20 @@
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
 
-export function LocationShareCard() {
+interface LocationShareCardProps {
+  onLocationShared?: (location: { latitude?: number; longitude?: number; address?: string }) => void;
+}
+
+export function LocationShareCard({ onLocationShared }: LocationShareCardProps) {
   const { toast } = useToast();
   const [isLocationShared, setIsLocationShared] = useState(false);
   const [address, setAddress] = useState("");
+  const [location, setLocation] = useState<{ latitude?: number; longitude?: number; address?: string }>({});
   
   const handleShareLocation = () => {
     if (navigator.geolocation) {
@@ -21,7 +26,18 @@ export function LocationShareCard() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           // Success
+          const newLocation = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          };
+          
+          setLocation(newLocation);
           setIsLocationShared(true);
+          
+          if (onLocationShared) {
+            onLocationShared(newLocation);
+          }
+          
           toast({
             title: "Location shared",
             description: "Your location has been shared with helpers.",
@@ -55,11 +71,27 @@ export function LocationShareCard() {
       return;
     }
     
+    const newLocation = { address };
+    setLocation(newLocation);
     setIsLocationShared(true);
+    
+    if (onLocationShared) {
+      onLocationShared(newLocation);
+    }
+    
     toast({
       title: "Address saved",
       description: "Your address has been shared with helpers.",
     });
+  };
+
+  const handleUpdateLocation = () => {
+    setIsLocationShared(false);
+    setLocation({});
+    
+    if (onLocationShared) {
+      onLocationShared({});
+    }
   };
 
   return (
@@ -119,10 +151,20 @@ export function LocationShareCard() {
                 Location successfully shared with helpers
               </p>
             </div>
+            {location.address && (
+              <div className="p-3 bg-gray-50 rounded-md">
+                <p className="text-sm"><span className="font-semibold">Address:</span> {location.address}</p>
+              </div>
+            )}
+            {(location.latitude && location.longitude) && (
+              <div className="p-3 bg-gray-50 rounded-md">
+                <p className="text-sm"><span className="font-semibold">GPS coordinates shared</span></p>
+              </div>
+            )}
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => setIsLocationShared(false)}
+              onClick={handleUpdateLocation}
             >
               Update Location
             </Button>
