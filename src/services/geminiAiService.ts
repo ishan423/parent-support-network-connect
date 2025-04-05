@@ -1,3 +1,4 @@
+
 import { useToast } from "@/components/ui/use-toast";
 
 // Define the response type from Gemini
@@ -19,7 +20,19 @@ export const setGeminiApiKey = (key: string) => {
   geminiApiKey = key;
 };
 
-export const getGeminiApiKey = () => geminiApiKey;
+export const getGeminiApiKey = () => {
+  // First check memory
+  if (geminiApiKey) return geminiApiKey;
+  
+  // Then check localStorage as fallback
+  const storedKey = localStorage.getItem("geminiApiKey");
+  if (storedKey) {
+    geminiApiKey = storedKey;
+    return storedKey;
+  }
+  
+  return null;
+};
 
 export const geminiAiService = {
   async generateResponse(
@@ -27,7 +40,8 @@ export const geminiAiService = {
     context: string,
     category?: string
   ): Promise<string> {
-    if (!geminiApiKey) {
+    const apiKey = getGeminiApiKey();
+    if (!apiKey) {
       throw new Error("API key not set. Please set your Gemini API key first.");
     }
 
@@ -46,7 +60,7 @@ export const geminiAiService = {
       `;
 
       const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + geminiApiKey,
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + apiKey,
         {
           method: "POST",
           headers: {

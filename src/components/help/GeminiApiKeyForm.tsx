@@ -1,11 +1,13 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { setGeminiApiKey, getGeminiApiKey } from "@/services/geminiAiService";
 import { useToast } from "@/components/ui/use-toast";
+import { Switch } from "@/components/ui/switch";
+import { InfoIcon } from "lucide-react";
 
 interface GeminiApiKeyFormProps {
   onApiKeySet: () => void;
@@ -13,7 +15,17 @@ interface GeminiApiKeyFormProps {
 
 const GeminiApiKeyForm: React.FC<GeminiApiKeyFormProps> = ({ onApiKeySet }) => {
   const [apiKey, setApiKey] = useState("");
+  const [rememberKey, setRememberKey] = useState(false);
   const { toast } = useToast();
+
+  // Check if API key is stored in localStorage
+  useEffect(() => {
+    const storedKey = localStorage.getItem("geminiApiKey");
+    if (storedKey) {
+      setApiKey(storedKey);
+      setRememberKey(true);
+    }
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +39,16 @@ const GeminiApiKeyForm: React.FC<GeminiApiKeyFormProps> = ({ onApiKeySet }) => {
       return;
     }
 
+    // Store API key in memory
     setGeminiApiKey(apiKey);
+    
+    // Store in localStorage if remember is checked
+    if (rememberKey) {
+      localStorage.setItem("geminiApiKey", apiKey);
+    } else {
+      localStorage.removeItem("geminiApiKey");
+    }
+
     toast({
       title: "API Key Set",
       description: "Your Gemini API key has been set successfully",
@@ -41,6 +62,9 @@ const GeminiApiKeyForm: React.FC<GeminiApiKeyFormProps> = ({ onApiKeySet }) => {
         <CardTitle className="text-indigo-700 dark:text-indigo-300">
           Connect to Gemini AI
         </CardTitle>
+        <CardDescription>
+          Enter your Gemini API key to access the Accessibility Assistant
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -54,10 +78,31 @@ const GeminiApiKeyForm: React.FC<GeminiApiKeyFormProps> = ({ onApiKeySet }) => {
               placeholder="Enter your Gemini API key"
               className="w-full"
             />
-            <p className="text-xs text-muted-foreground">
-              Your API key is not stored on our servers and is only used for this session.
-            </p>
+            <div className="flex items-start gap-2 text-xs text-muted-foreground">
+              <InfoIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <p>
+                You can get a Gemini API key from the{" "}
+                <a 
+                  href="https://ai.google.dev/tutorials/setup" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="text-indigo-600 hover:underline dark:text-indigo-400"
+                >
+                  Google AI Studio
+                </a>
+              </p>
+            </div>
           </div>
+          
+          <div className="flex items-center space-x-2">
+            <Switch 
+              id="remember-key" 
+              checked={rememberKey}
+              onCheckedChange={setRememberKey}
+            />
+            <Label htmlFor="remember-key" className="text-sm">Remember my API key on this device</Label>
+          </div>
+          
           <Button type="submit" className="w-full">
             Connect to Gemini AI
           </Button>
