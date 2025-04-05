@@ -1,12 +1,13 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Mic, Send, RefreshCw, Loader2, MessageSquare, Coffee, MapPin, Pill, Brain } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { geminiAiService, getGeminiApiKey } from "@/services/geminiAiService";
+import GeminiApiKeyForm from "./GeminiApiKeyForm";
 
 // Categories for the assistant
 const categories = [
@@ -48,7 +49,13 @@ const DisabilityAIAssistant = () => {
   ]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isApiKeySet, setIsApiKeySet] = useState(false);
   const { toast } = useToast();
+
+  // Check if API key is already set
+  useEffect(() => {
+    setIsApiKeySet(!!getGeminiApiKey());
+  }, []);
 
   const handleSendMessage = async () => {
     if (!message.trim()) return;
@@ -57,32 +64,50 @@ const DisabilityAIAssistant = () => {
     setConversation(prev => [...prev, { role: "user", content: message }]);
     setIsProcessing(true);
     
-    // Simulated AI response with improved pattern matching
-    setTimeout(() => {
-      let response = "";
-      const lowerCaseMessage = message.toLowerCase();
+    try {
+      // Get previous conversation context (last 3 messages)
+      const recentConversation = conversation
+        .slice(-3)
+        .map(msg => `${msg.role}: ${msg.content}`)
+        .join("\n");
       
-      // Enhanced pattern matching with more detailed responses
-      if (lowerCaseMessage.includes("wheelchair") || lowerCaseMessage.includes("mobility")) {
-        response = "I can help you find wheelchair accessible locations nearby. Based on your location, I've identified 3 accessible venues within 0.5 miles. Would you like me to show you directions to these places?";
-      } else if (lowerCaseMessage.includes("blind") || lowerCaseMessage.includes("vision")) {
-        response = "I've activated enhanced screen reading features. I can describe your surroundings or read content aloud. Would you like me to enable high contrast mode for better visibility?";
-      } else if (lowerCaseMessage.includes("deaf") || lowerCaseMessage.includes("hearing")) {
-        response = "I've enabled real-time text captions for audio content. Would you like me to connect you with a sign language interpreter through our virtual service? The estimated wait time is 2 minutes.";
-      } else if (lowerCaseMessage.includes("medicine") || lowerCaseMessage.includes("medication")) {
-        response = "I can set up medication reminders for you. What medications do you need to track, and when do you need to take them? I can also locate the nearest pharmacy that delivers.";
-      } else if (lowerCaseMessage.includes("help") || lowerCaseMessage.includes("assistance")) {
-        response = "I'm here to assist with various accessibility needs. I can help with navigation, reading assistance, medication reminders, or connecting you with specialized support services. What specific type of help do you need today?";
-      } else if (lowerCaseMessage.includes("emergency")) {
-        response = "If you're experiencing an emergency, I recommend using the Emergency Help service on this page. Would you like me to connect you with emergency services immediately?";
-      } else {
-        response = "I'm here to assist with accessibility needs. Could you tell me more about what specific help you require? For example, I can help with mobility issues, vision assistance, hearing support, or medication reminders.";
-      }
+      // Call Gemini AI API
+      const response = await geminiAiService.generateResponse(
+        message,
+        `Recent conversation context:\n${recentConversation}`,
+        selectedCategory || undefined
+      );
       
       setConversation(prev => [...prev, { role: "assistant", content: response }]);
+    } catch (error) {
+      console.error("Failed to get AI response:", error);
+      let errorMessage = "Unable to generate a response. Please try again.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes("API key")) {
+          setIsApiKeySet(false);
+          errorMessage = "API key issue. Please reset your Gemini API key.";
+        }
+      }
+      
+      toast({
+        title: "AI Response Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      
+      // Add error message to conversation
+      setConversation(prev => [
+        ...prev, 
+        { 
+          role: "assistant", 
+          content: "I'm having trouble connecting to my AI services. Please try again or check your internet connection." 
+        }
+      ]);
+    } finally {
       setIsProcessing(false);
       setMessage("");
-    }, 1000);
+    }
   };
 
   const handleVoiceInput = () => {
@@ -111,6 +136,11 @@ const DisabilityAIAssistant = () => {
   const handleSuggestionClick = (question: string) => {
     setMessage(question);
   };
+
+  // If API key is not set, show the form to set it
+  if (!isApiKeySet) {
+    return <GeminiApiKeyForm onApiKeySet={() => setIsApiKeySet(true)} />;
+  }
 
   return (
     <Card className="w-full">
