@@ -4,10 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { setGeminiApiKey, getGeminiApiKey } from "@/services/geminiAiService";
+import { setGeminiApiKey, getGeminiApiKey, isGeminiApiKeyValid } from "@/services/geminiAiService";
 import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
-import { InfoIcon, Key, Eye, EyeOff } from "lucide-react";
+import { InfoIcon, Key, Eye, EyeOff, Loader2 } from "lucide-react";
 
 interface GeminiApiKeyFormProps {
   onApiKeySet: () => void;
@@ -17,6 +17,7 @@ const GeminiApiKeyForm: React.FC<GeminiApiKeyFormProps> = ({ onApiKeySet }) => {
   const [apiKey, setApiKey] = useState("");
   const [rememberKey, setRememberKey] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
   const { toast } = useToast();
 
   // Check if API key is stored in localStorage
@@ -28,7 +29,7 @@ const GeminiApiKeyForm: React.FC<GeminiApiKeyFormProps> = ({ onApiKeySet }) => {
     }
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!apiKey.trim()) {
@@ -40,21 +41,48 @@ const GeminiApiKeyForm: React.FC<GeminiApiKeyFormProps> = ({ onApiKeySet }) => {
       return;
     }
 
-    // Store API key in memory
-    setGeminiApiKey(apiKey);
+    // Validate the API key
+    setIsValidating(true);
     
-    // Store in localStorage if remember is checked
-    if (rememberKey) {
-      localStorage.setItem("geminiApiKey", apiKey);
-    } else {
-      localStorage.removeItem("geminiApiKey");
-    }
+    try {
+      // Store API key in memory
+      setGeminiApiKey(apiKey);
+      
+      // Test if the API key works
+      const isValid = await isGeminiApiKeyValid();
+      
+      if (!isValid) {
+        toast({
+          title: "Invalid API Key",
+          description: "The provided API key doesn't seem to be valid",
+          variant: "destructive",
+        });
+        setIsValidating(false);
+        return;
+      }
+      
+      // Store in localStorage if remember is checked
+      if (rememberKey) {
+        localStorage.setItem("geminiApiKey", apiKey);
+      } else {
+        localStorage.removeItem("geminiApiKey");
+      }
 
-    toast({
-      title: "API Key Set",
-      description: "Your Gemini API key has been set successfully",
-    });
-    onApiKeySet();
+      toast({
+        title: "API Key Verified",
+        description: "Your Gemini API key has been set successfully",
+      });
+      onApiKeySet();
+    } catch (error) {
+      console.error("Error validating API key:", error);
+      toast({
+        title: "Validation Error",
+        description: "Could not validate your API key. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsValidating(false);
+    }
   };
 
   const toggleShowApiKey = () => {
@@ -84,6 +112,7 @@ const GeminiApiKeyForm: React.FC<GeminiApiKeyFormProps> = ({ onApiKeySet }) => {
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="Enter your Gemini API key"
                 className="w-full pr-10"
+                disabled={isValidating}
               />
               <Button 
                 type="button" 
@@ -91,6 +120,7 @@ const GeminiApiKeyForm: React.FC<GeminiApiKeyFormProps> = ({ onApiKeySet }) => {
                 size="icon"
                 className="absolute right-0 top-0"
                 onClick={toggleShowApiKey}
+                disabled={isValidating}
               >
                 {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
@@ -116,12 +146,20 @@ const GeminiApiKeyForm: React.FC<GeminiApiKeyFormProps> = ({ onApiKeySet }) => {
               id="remember-key" 
               checked={rememberKey}
               onCheckedChange={setRememberKey}
+              disabled={isValidating}
             />
             <Label htmlFor="remember-key" className="text-sm">Remember my API key on this device</Label>
           </div>
           
-          <Button type="submit" className="w-full">
-            Connect to Gemini AI
+          <Button type="submit" className="w-full" disabled={isValidating}>
+            {isValidating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Verifying...
+              </>
+            ) : (
+              "Connect to Gemini AI"
+            )}
           </Button>
         </form>
       </CardContent>
