@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { setGeminiApiKey, getGeminiApiKey } from "@/services/geminiAiService";
 import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
-import { InfoIcon } from "lucide-react";
+import { InfoIcon, Key, Eye, EyeOff } from "lucide-react";
 
 interface GeminiApiKeyFormProps {
   onApiKeySet: () => void;
@@ -16,6 +16,7 @@ interface GeminiApiKeyFormProps {
 const GeminiApiKeyForm: React.FC<GeminiApiKeyFormProps> = ({ onApiKeySet }) => {
   const [apiKey, setApiKey] = useState("");
   const [rememberKey, setRememberKey] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
   const { toast } = useToast();
 
   // Check if API key is stored in localStorage
@@ -56,10 +57,15 @@ const GeminiApiKeyForm: React.FC<GeminiApiKeyFormProps> = ({ onApiKeySet }) => {
     onApiKeySet();
   };
 
+  const toggleShowApiKey = () => {
+    setShowApiKey(!showApiKey);
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-indigo-700 dark:text-indigo-300">
+        <CardTitle className="text-indigo-700 dark:text-indigo-300 flex items-center gap-2">
+          <Key className="h-5 w-5" />
           Connect to Gemini AI
         </CardTitle>
         <CardDescription>
@@ -70,14 +76,25 @@ const GeminiApiKeyForm: React.FC<GeminiApiKeyFormProps> = ({ onApiKeySet }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="apiKey">Gemini API Key</Label>
-            <Input
-              id="apiKey"
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Enter your Gemini API key"
-              className="w-full"
-            />
+            <div className="relative">
+              <Input
+                id="apiKey"
+                type={showApiKey ? "text" : "password"}
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="Enter your Gemini API key"
+                className="w-full pr-10"
+              />
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="icon"
+                className="absolute right-0 top-0"
+                onClick={toggleShowApiKey}
+              >
+                {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </div>
             <div className="flex items-start gap-2 text-xs text-muted-foreground">
               <InfoIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <p>

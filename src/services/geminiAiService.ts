@@ -60,7 +60,7 @@ export const geminiAiService = {
       `;
 
       const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + apiKey,
+        "https://generativelanguage.googleapis.com/v1/models/gemini-1.0-pro:generateContent?key=" + apiKey,
         {
           method: "POST",
           headers: {
@@ -88,6 +88,7 @@ export const geminiAiService = {
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error("API Error:", errorData);
         throw new Error(errorData.error?.message || "Failed to generate response");
       }
 
