@@ -106,7 +106,7 @@ const RequestHelp = () => {
               <Card className="p-4 bg-rose-50 dark:bg-rose-950 border-rose-200 dark:border-rose-800">
                 <h2 className="text-xl font-semibold mb-4 text-rose-700 dark:text-rose-300">Emergency Assistance</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <EmergencyHelpCard onRequest={(details) => handleHelpRequest("emergency", details)} />
+                  <EmergencyHelpCard />
                   <LocationShareCard onLocationShared={handleLocationShared} />
                 </div>
               </Card>
@@ -114,8 +114,8 @@ const RequestHelp = () => {
               <Card className="p-4 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
                 <h2 className="text-xl font-semibold mb-4 text-blue-700 dark:text-blue-300">Health & Community Support</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <MedicalHelpCard onRequest={(details) => handleHelpRequest("medical", details)} />
-                  <CommunityHelpCard onRequest={(details) => handleHelpRequest("community", details)} />
+                  <MedicalHelpCard />
+                  <CommunityHelpCard />
                 </div>
               </Card>
             </TabsContent>
